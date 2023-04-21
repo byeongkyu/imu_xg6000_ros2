@@ -144,7 +144,7 @@ class ImuXG6000Node : public rclcpp::Node
                     double y = (int16_t)((recv_buf[5] << 8) + recv_buf[4]) / 100.0 * M_PI / 180.0;
 
                     tf2::Quaternion q;
-                    q.setRPY(r, p, y);
+                    q.setRPY(r, -p, -y);
 
                     imu_msg_.orientation.x = q.getX();
                     imu_msg_.orientation.y = q.getY();

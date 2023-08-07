@@ -95,9 +95,10 @@ class ImuXG6000Node : public rclcpp::Node
                     char header_byte = 0;
                     ser_.ReadByte(header_byte, 100);
 
-                    if(header_byte == 0xA6)
+                    if((uint8_t)header_byte == 0xA6)
                     {
                         current_state = 1;
+                        RCLCPP_DEBUG(this->get_logger(), "Stage 1");
                     }
                 }
                 else if(current_state == 1 && ser_.GetNumberOfBytesAvailable() >= 1)
@@ -105,15 +106,18 @@ class ImuXG6000Node : public rclcpp::Node
                     char header_byte = 0;
                     ser_.ReadByte(header_byte, 100);
 
-                    if(header_byte == 0xA6)
+                    if((uint8_t)header_byte == 0xA6)
                     {
                         current_state = 2;
+                        RCLCPP_DEBUG(this->get_logger(), "Stage 2");
                     }
                 }
                 else if(current_state == 2 && ser_.GetNumberOfBytesAvailable() >= 1)
                 {
                     char index_byte = 0;
                     ser_.ReadByte(index_byte, 100);
+
+                    RCLCPP_DEBUG(this->get_logger(), "%d", (uint8_t)index_byte);
 
                     if(!is_stream_started && index_byte == 1)
                     {
@@ -122,14 +126,19 @@ class ImuXG6000Node : public rclcpp::Node
                         RCLCPP_INFO(this->get_logger(), "start streaming...");
                         current_index = 1;
                     }
-                    else if(is_stream_started)
+
+                    if(is_stream_started)
                     {
                         current_state = 3;
-                        current_index = index_byte;
+                        current_index = (uint8_t)index_byte;
                     }
                     else
                     {
                         current_state = 0;
+
+                        rclcpp::sleep_for(std::chrono::milliseconds(100));
+                        ser_.FlushIOBuffers();
+                        ser_.Write("$MIB,RESET*87\r");
                         // RCLCPP_INFO(this->get_logger(), "waste index %d...", index_byte);
                     }
                 }
